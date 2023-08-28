@@ -2,20 +2,24 @@ import sys, os
 root_dir = os.path.dirname(os.path.abspath(__file__))+'/../..'
 sys.path.append(root_dir)
 
-import numpy as np
-import cartPoleEnv
 from blitting import LivePlot
+import cartPoleEnv
+from controllers import cartpole_LQR
+import numpy as np
 
-
+##################   CONSTANTS   ####################
+mass_cart = 1
+mass_pole = 0.1
+pole_length = 0.5
+u_max = 10
+#####################################################
 
 env = cartPoleEnv.CartPoleEnv()
-env.gravity = 9.8
-env.masscart = 1.0
-env.masspole = 0.1
-env.length = 0.5  # height of center of mass
-env.max_force = 10.0
+env.masscart = mass_cart
+env.masspole = mass_pole
+env.length = pole_length
+env.max_force = u_max
 env.reset()
-
 
 lp = LivePlot(
     labels=(
@@ -29,19 +33,23 @@ lp = LivePlot(
     ymaxes=[2.4, env.theta_threshold_radians, 1, 1, env.max_force],
 )
 
-u = 0
+lqr = cartpole_LQR(M=mass_cart, m=mass_pole, L=pole_length)
 
+u = 0
 running = True
 while not lp.closed:
     obs, reward, terminated, state = env.step(u)
     if(terminated):
+        u = 0
         env.reset()
+        continue
 
-
-    K = [0.5, 0.3, 20, 1]
-    u = K@state
+    u = lqr.get_u(state)
+    print (u)
+    print (lqr.K)
 
     x, xdot, theta, thetadot = state
+
 
 
     lp.plot(

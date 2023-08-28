@@ -35,11 +35,11 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
 
     metadata = {
         "render_modes": ["human", "rgb_array", "single_rgb_array"],
-        "render_fps": 30,
+        "render_fps": 60,
     }
 
-    def __init__(self, render_mode: Optional[str] = None, noise_lvl=0.1):
-        self.gravity = 9.8
+    def __init__(self, render_mode: Optional[str] = None, noise_lvl=0.1, init_random=0.2):
+        self.gravity = 9.81
         self.masscart = 1.0
         self.masspole = 0.1
         self.total_mass = self.masspole + self.masscart
@@ -53,7 +53,7 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
         self.tau = self.sim_speed/self.metadata['render_fps']  # seconds between state updates
 
         self.noise_lvl = noise_lvl
-        self.init_random = 0.5
+        self.init_random = init_random
 
         # Angle at which to fail the episode
         self.theta_threshold_radians = 90 * 2 * math.pi / 360
