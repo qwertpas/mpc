@@ -4,7 +4,7 @@ sys.path.append(root_dir)
 
 from blitting import LivePlot
 import cartPoleEnv
-from controllers import cartpole_LQR
+from controllers import cartpole_LQR, cartpole_MPC
 import numpy as np
 
 ##################   CONSTANTS   ####################
@@ -34,6 +34,7 @@ lp = LivePlot(
 )
 
 lqr = cartpole_LQR(M=mass_cart, m=mass_pole, L=pole_length)
+mpc = cartpole_MPC(M=mass_cart, m=mass_pole, L=pole_length, dt=0.1, N=20)
 
 u = 0
 running = True
@@ -44,10 +45,9 @@ while not lp.closed:
         env.reset()
         continue
 
-    u = lqr.get_u(state)
+    # u = lqr.get_u(state)
+    u = mpc.solve_u(state)
     print (u)
-    print (lqr.K)
-
     x, xdot, theta, thetadot = state
 
 
