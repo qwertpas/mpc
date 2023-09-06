@@ -38,7 +38,7 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
         "render_fps": 60,
     }
 
-    def __init__(self, render_mode: Optional[str] = None, noise_lvl=0.1, init_random=0.2):
+    def __init__(self, render_mode: Optional[str] = None, noise_lvl=0.1, init_random=0.0):
         self.gravity = 9.81
         self.masscart = 1.0
         self.masspole = 0.1
@@ -165,7 +165,8 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
         low, high = utils.maybe_parse_reset_bounds(
             options, -self.init_random, self.init_random  # default low
         )  # default high
-        self.state = np.array([0, 0, self.np_random.uniform(low=low, high=high), 0]).reshape(4,)
+        # self.state = np.array([0, 0, self.np_random.uniform(low=low, high=high), 0]).reshape(4,)
+        self.state = np.array([0, 0.05, 0, 0]).reshape(4,)
         self.steps_beyond_terminated = None
         self._render()
         return self.state

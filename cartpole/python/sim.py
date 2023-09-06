@@ -34,7 +34,7 @@ lp = LivePlot(
 )
 
 lqr = cartpole_LQR(M=mass_cart, m=mass_pole, L=pole_length)
-mpc = cartpole_MPC(M=mass_cart, m=mass_pole, L=pole_length, dt=0.1, N=20)
+mpc = cartpole_MPC(M=mass_cart, m=mass_pole, L=pole_length, dt=0.05, N=20)
 
 u = 0
 running = True
