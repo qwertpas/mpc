@@ -3,5 +3,9 @@
         "dense": "cpp",
         "svd": "cpp",
         "iostream": "cpp"
-    }
+    },
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "python.formatting.provider": "none"
 }
