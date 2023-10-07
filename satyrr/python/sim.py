@@ -21,61 +21,25 @@ r = 0.1
 q_log = []
 tau_log = []
 
+
+# Simulation loop
 for i in range(500):
 
+    # Mass matrix of the manipulator equation: M*qdd + C + G = τ
     M = np.matrix([
         [
             J[0] * N[0] ** 2 + m[0] + m[1] + m[2],
-            (
-                cos(q[1] + q[3]) * L[0]
-                + cos(q[1] + q[3] + q[4]) * L[1]
-                - cos(q[1]) * q[2]
-            )
-            * m[2]
-            - cos(q[1]) * m[1] * q[2],
+            (cos(q[1] + q[3]) * L[0] + cos(q[1] + q[3] + q[4]) * L[1] - cos(q[1]) * q[2]) * m[2] - cos(q[1]) * m[1] * q[2],
             (-m[1] - m[2]) * sin(q[1]),
             (cos(q[1] + q[3]) * L[0] + cos(q[1] + q[3] + q[4]) * L[1]) * m[2],
             cos(q[1] + q[3] + q[4]) * L[1] * m[2],
         ],
         [
-            (
-                cos(q[1] + q[3]) * L[0]
-                + cos(q[1] + q[3] + q[4]) * L[1]
-                - cos(q[1]) * q[2]
-            )
-            * m[2]
-            - cos(q[1]) * m[1] * q[2],
-            (
-                (
-                    sin(q[1] + q[3]) * L[0]
-                    + sin(q[1] + q[3] + q[4]) * L[1]
-                    - sin(q[1]) * q[2]
-                )
-                ** 2
-                + (
-                    cos(q[1] + q[3]) * L[0]
-                    + cos(q[1] + q[3] + q[4]) * L[1]
-                    - cos(q[1]) * q[2]
-                )
-                ** 2
-            )
-            * m[2]
-            + I[0]
-            + I[1]
-            + I[2]
-            + m[1] * q[2] ** 2,
+            (cos(q[1] + q[3]) * L[0] + cos(q[1] + q[3] + q[4]) * L[1] - cos(q[1]) * q[2]) * m[2] - cos(q[1]) * m[1] * q[2],
+            ((sin(q[1] + q[3]) * L[0] + sin(q[1] + q[3] + q[4]) * L[1] - sin(q[1]) * q[2]) ** 2 + (cos(q[1] + q[3]) * L[0] + cos(q[1] + q[3] + q[4]) * L[1] - cos(q[1]) * q[2]) ** 2) * m[2] + I[0] + I[1] + I[2] + m[1] * q[2] ** 2,
             (sin(q[3] + q[4]) * L[1] + sin(q[3]) * L[0]) * m[2],
-            -cos(q[3] + q[4]) * L[1] * m[2] * q[2]
-            - cos(q[3]) * L[0] * m[2] * q[2]
-            + 2 * cos(q[4]) * L[0] * L[1] * m[2]
-            + I[1]
-            + I[2]
-            + L[0] ** 2 * m[2]
-            + L[1] ** 2 * m[2],
-            -cos(q[3] + q[4]) * L[1] * m[2] * q[2]
-            + cos(q[4]) * L[0] * L[1] * m[2]
-            + I[2]
-            + L[1] ** 2 * m[2],
+            -cos(q[3] + q[4]) * L[1] * m[2] * q[2] - cos(q[3]) * L[0] * m[2] * q[2] + 2 * cos(q[4]) * L[0] * L[1] * m[2] + I[1] + I[2] + L[0] ** 2 * m[2] + L[1] ** 2 * m[2],
+            -cos(q[3] + q[4]) * L[1] * m[2] * q[2] + cos(q[4]) * L[0] * L[1] * m[2] + I[2] + L[1] ** 2 * m[2],
         ],
         [
             (-m[1] - m[2]) * sin(q[1]),
@@ -101,138 +65,132 @@ for i in range(500):
     ])
     M_inv = np.linalg.inv(M)
 
-    CG = np.matrix(
+    # Sum of Coriolis and Gravity matrices
+    CG = np.matrix([
         [
-            [
-                (
-                    (sin(q[1]) * qd[1] * q[2] - cos(q[1]) * qd[2]) * m[1]
-                    - (
-                        (sin(q[1] + q[3]) * L[0] + sin(q[1] + q[3] + q[4]) * L[1]) * qd[3]
-                        + (
-                            sin(q[1] + q[3]) * L[0]
-                            + sin(q[1] + q[3] + q[4]) * L[1]
-                            - sin(q[1]) * q[2]
-                        )
-                        * qd[1]
-                        + sin(q[1] + q[3] + q[4]) * L[1] * qd[4]
-                        + cos(q[1]) * qd[2]
-                    )
-                    * m[2]
-                )
-                * qd[1]
-                - (m[1] + m[2]) * cos(q[1]) * qd[1] * qd[2]
+            (
+                (sin(q[1]) * qd[1] * q[2] - cos(q[1]) * qd[2]) * m[1]
                 - (
-                    (sin(q[1] + q[3]) * L[0] + sin(q[1] + q[3] + q[4]) * L[1]) * qd[1]
-                    + (sin(q[1] + q[3]) * L[0] + sin(q[1] + q[3] + q[4]) * L[1]) * qd[3]
+                    (sin(q[1] + q[3]) * L[0] + sin(q[1] + q[3] + q[4]) * L[1]) * qd[3]
+                    + (
+                        sin(q[1] + q[3]) * L[0]
+                        + sin(q[1] + q[3] + q[4]) * L[1]
+                        - sin(q[1]) * q[2]
+                    )
+                    * qd[1]
                     + sin(q[1] + q[3] + q[4]) * L[1] * qd[4]
-                )
-                * qd[3]
-                * m[2]
-                - (qd[1] + qd[3] + qd[4]) * sin(q[1] + q[3] + q[4]) * L[1] * qd[4] * m[2]
-            ],
-            [
-                g * sin(q[1] + q[3]) * L[0] * m[2]
-                + g * sin(q[1] + q[3] + q[4]) * L[1] * m[2]
-                - g * sin(q[1]) * m[1] * q[2]
-                - g * sin(q[1]) * m[2] * q[2]
-                + 2 * sin(q[3] + q[4]) * L[1] * qd[1] * qd[3] * m[2] * q[2]
-                + 2 * sin(q[3] + q[4]) * L[1] * qd[1] * qd[4] * m[2] * q[2]
-                + sin(q[3] + q[4]) * L[1] * qd[3] ** 2 * m[2] * q[2]
-                + 2 * sin(q[3] + q[4]) * L[1] * qd[3] * qd[4] * m[2] * q[2]
-                + sin(q[3] + q[4]) * L[1] * qd[4] ** 2 * m[2] * q[2]
-                + 2 * sin(q[3]) * L[0] * qd[1] * qd[3] * m[2] * q[2]
-                + sin(q[3]) * L[0] * qd[3] ** 2 * m[2] * q[2]
-                - 2 * sin(q[4]) * L[0] * L[1] * qd[1] * qd[4] * m[2]
-                - 2 * sin(q[4]) * L[0] * L[1] * qd[3] * qd[4] * m[2]
-                - sin(q[4]) * L[0] * L[1] * qd[4] ** 2 * m[2]
-                - 2 * cos(q[3] + q[4]) * L[1] * qd[1] * qd[2] * m[2]
-                - 2 * cos(q[3]) * L[0] * qd[1] * qd[2] * m[2]
-                + 2 * qd[1] * qd[2] * m[1] * q[2]
-                + 2 * qd[1] * qd[2] * m[2] * q[2]
-            ],
-            [
-                g * cos(q[1]) * m[1]
-                + g * cos(q[1]) * m[2]
-                + cos(q[3] + q[4]) * L[1] * qd[1] ** 2 * m[2]
-                + 2 * cos(q[3] + q[4]) * L[1] * qd[1] * qd[3] * m[2]
-                + 2 * cos(q[3] + q[4]) * L[1] * qd[1] * qd[4] * m[2]
-                + cos(q[3] + q[4]) * L[1] * qd[3] ** 2 * m[2]
-                + 2 * cos(q[3] + q[4]) * L[1] * qd[3] * qd[4] * m[2]
-                + cos(q[3] + q[4]) * L[1] * qd[4] ** 2 * m[2]
-                + cos(q[3]) * L[0] * qd[1] ** 2 * m[2]
-                + 2 * cos(q[3]) * L[0] * qd[1] * qd[3] * m[2]
-                + cos(q[3]) * L[0] * qd[3] ** 2 * m[2]
-                - qd[1] ** 2 * m[1] * q[2]
-                - qd[1] ** 2 * m[2] * q[2]
-            ],
-            [
-                (
-                    g * sin(q[1] + q[3]) * L[0]
-                    + g * sin(q[1] + q[3] + q[4]) * L[1]
-                    - sin(q[3] + q[4]) * L[1] * qd[1] ** 2 * q[2]
-                    - sin(q[3]) * L[0] * qd[1] ** 2 * q[2]
-                    - 2 * sin(q[4]) * L[0] * L[1] * qd[1] * qd[4]
-                    - 2 * sin(q[4]) * L[0] * L[1] * qd[3] * qd[4]
-                    - sin(q[4]) * L[0] * L[1] * qd[4] ** 2
-                    - 2 * cos(q[3] + q[4]) * L[1] * qd[1] * qd[2]
-                    - 2 * cos(q[3]) * L[0] * qd[1] * qd[2]
+                    + cos(q[1]) * qd[2]
                 )
                 * m[2]
-            ],
-            [
-                (
-                    g * sin(q[1] + q[3] + q[4])
-                    - sin(q[3] + q[4]) * qd[1] ** 2 * q[2]
-                    + sin(q[4]) * L[0] * qd[1] ** 2
-                    + 2 * sin(q[4]) * L[0] * qd[1] * qd[3]
-                    + sin(q[4]) * L[0] * qd[3] ** 2
-                    - 2 * cos(q[3] + q[4]) * qd[1] * qd[2]
-                )
-                * L[1]
-                * m[2]
-            ],
-        ]
-    )
+            )
+            * qd[1]
+            - (m[1] + m[2]) * cos(q[1]) * qd[1] * qd[2]
+            - (
+                (sin(q[1] + q[3]) * L[0] + sin(q[1] + q[3] + q[4]) * L[1]) * qd[1]
+                + (sin(q[1] + q[3]) * L[0] + sin(q[1] + q[3] + q[4]) * L[1]) * qd[3]
+                + sin(q[1] + q[3] + q[4]) * L[1] * qd[4]
+            )
+            * qd[3]
+            * m[2]
+            - (qd[1] + qd[3] + qd[4]) * sin(q[1] + q[3] + q[4]) * L[1] * qd[4] * m[2]
+        ],
+        [
+            g * sin(q[1] + q[3]) * L[0] * m[2]
+            + g * sin(q[1] + q[3] + q[4]) * L[1] * m[2]
+            - g * sin(q[1]) * m[1] * q[2]
+            - g * sin(q[1]) * m[2] * q[2]
+            + 2 * sin(q[3] + q[4]) * L[1] * qd[1] * qd[3] * m[2] * q[2]
+            + 2 * sin(q[3] + q[4]) * L[1] * qd[1] * qd[4] * m[2] * q[2]
+            + sin(q[3] + q[4]) * L[1] * qd[3] ** 2 * m[2] * q[2]
+            + 2 * sin(q[3] + q[4]) * L[1] * qd[3] * qd[4] * m[2] * q[2]
+            + sin(q[3] + q[4]) * L[1] * qd[4] ** 2 * m[2] * q[2]
+            + 2 * sin(q[3]) * L[0] * qd[1] * qd[3] * m[2] * q[2]
+            + sin(q[3]) * L[0] * qd[3] ** 2 * m[2] * q[2]
+            - 2 * sin(q[4]) * L[0] * L[1] * qd[1] * qd[4] * m[2]
+            - 2 * sin(q[4]) * L[0] * L[1] * qd[3] * qd[4] * m[2]
+            - sin(q[4]) * L[0] * L[1] * qd[4] ** 2 * m[2]
+            - 2 * cos(q[3] + q[4]) * L[1] * qd[1] * qd[2] * m[2]
+            - 2 * cos(q[3]) * L[0] * qd[1] * qd[2] * m[2]
+            + 2 * qd[1] * qd[2] * m[1] * q[2]
+            + 2 * qd[1] * qd[2] * m[2] * q[2]
+        ],
+        [
+            g * cos(q[1]) * m[1]
+            + g * cos(q[1]) * m[2]
+            + cos(q[3] + q[4]) * L[1] * qd[1] ** 2 * m[2]
+            + 2 * cos(q[3] + q[4]) * L[1] * qd[1] * qd[3] * m[2]
+            + 2 * cos(q[3] + q[4]) * L[1] * qd[1] * qd[4] * m[2]
+            + cos(q[3] + q[4]) * L[1] * qd[3] ** 2 * m[2]
+            + 2 * cos(q[3] + q[4]) * L[1] * qd[3] * qd[4] * m[2]
+            + cos(q[3] + q[4]) * L[1] * qd[4] ** 2 * m[2]
+            + cos(q[3]) * L[0] * qd[1] ** 2 * m[2]
+            + 2 * cos(q[3]) * L[0] * qd[1] * qd[3] * m[2]
+            + cos(q[3]) * L[0] * qd[3] ** 2 * m[2]
+            - qd[1] ** 2 * m[1] * q[2]
+            - qd[1] ** 2 * m[2] * q[2]
+        ],
+        [
+            (
+                g * sin(q[1] + q[3]) * L[0]
+                + g * sin(q[1] + q[3] + q[4]) * L[1]
+                - sin(q[3] + q[4]) * L[1] * qd[1] ** 2 * q[2]
+                - sin(q[3]) * L[0] * qd[1] ** 2 * q[2]
+                - 2 * sin(q[4]) * L[0] * L[1] * qd[1] * qd[4]
+                - 2 * sin(q[4]) * L[0] * L[1] * qd[3] * qd[4]
+                - sin(q[4]) * L[0] * L[1] * qd[4] ** 2
+                - 2 * cos(q[3] + q[4]) * L[1] * qd[1] * qd[2]
+                - 2 * cos(q[3]) * L[0] * qd[1] * qd[2]
+            )
+            * m[2]
+        ],
+        [
+            (
+                g * sin(q[1] + q[3] + q[4])
+                - sin(q[3] + q[4]) * qd[1] ** 2 * q[2]
+                + sin(q[4]) * L[0] * qd[1] ** 2
+                + 2 * sin(q[4]) * L[0] * qd[1] * qd[3]
+                + sin(q[4]) * L[0] * qd[3] ** 2
+                - 2 * cos(q[3] + q[4]) * qd[1] * qd[2]
+            )
+            * L[1]
+            * m[2]
+        ],
+    ])
 
 
-    # print("M: \n", M)
-    # print("M_inv: \n", M_inv)
-    # print("C+G: \n", CG)
+    legforce = 100*(0.5 - q[2]) - 5*(qd[2]) + 5 #pd controller on leg length = 0.5m
+    shoulderforce = -0.1*qd[3]                  #damping
+    elbowforce = -0.1*qd[4]                     #damping
 
-
-    # M*qdd + C*qd + G = tau
-    # qdd = M_inv * (tau - (C+g))
-    legforce = 100*(0.5 - q[2]) - 5*(qd[2]) + 5
-    shoulderforce = -0.1*qd[3]
-    elbowforce = -0.1*qd[4]
-
-    if i > 280 and i < 300:
+    if i > 280 and i < 300:                     #excitation to move forearm to forward to pi/2
         elbowforce += 5*(pi/2 - q[4])
-    elif i > 320 and i < 350:
+    elif i > 320 and i < 350:                   #excitation to move upper arm back to -pi/3
         shoulderforce += 5*(-pi/3 - q[3])
 
     K = [2, 0.5, -50, -0.5]
-    cartstate = np.array([q[0], qd[0], q[1], qd[1]])
+    cartstate = np.array([q[0], qd[0], q[1], qd[1]]) #LQR(ish) on the cartpole (not optimized)
     cartforce = K @ cartstate
 
     tau = np.array([cartforce, 0, legforce, shoulderforce, elbowforce]).reshape((5,1))
-    qdd_new = np.asarray(M_inv@(tau - CG)).flatten()
-    # print("qdd_new: \n", qdd_new, qdd_new.shape)
+
+    # Solve manipulator equation for qdd (acceleration)
+    qdd_new = np.asarray(M_inv@(tau - CG)).flatten() 
     
+    # Euler integration, switch to RK4 later for more accuracy
     qd += qdd_new * dt
     q += qd * dt
 
-    # print(q)
+    #log states and joint torques
     q_log.append(q.tolist())
     tau_log.append(tau.tolist())
 
-# print("\n")
 q_log = np.array(q_log)
 tau_log = np.array(tau_log)
-# print(q_log)
 
-plot_log = False
-# plot_log = True
+
+# Plot the states and torques over time
+# plot_log = False
+plot_log = True
 if plot_log:
     fig, axs = plt.subplots(2, 1, sharex=True, figsize=(10,8))
     axs[0].plot(q_log[:,0], label='x')
@@ -246,14 +204,13 @@ if plot_log:
     axs[1].plot(tau_log[:,3], label='τ shoulderforce')
     axs[1].plot(tau_log[:,4], label='τ elbow')
 
-
     for ax in axs:
         ax.legend()
     plt.show()
 
-# writer = imageio.get_writer(f'{dir_path}/log/animation.gif', mode='I')
-png_dir = f"{dir_path}/log"
 
+# Create GIF using logged states and forward kinematics
+png_dir = f"{dir_path}/log"
 for i in range(0, len(q_log), 10):
     q = q_log[i]
     p_wheel = [q[0], 0]
@@ -281,15 +238,12 @@ for i in range(0, len(q_log), 10):
     plt.savefig(f"{png_dir}/frame_{i:04d}.png")
     plt.close()
 
-
 images = []
 for file_name in sorted(os.listdir(png_dir)):
     if file_name.endswith('.png'):
         file_path = os.path.join(png_dir, file_name)
         images.append(imageio.imread(file_path))
-
-# Make it pause at the end so that the viewers can ponder
-for _ in range(10):
+for _ in range(10): #add 10 of the last frame at the end
     images.append(imageio.imread(file_path))
 
 imageio.mimsave(f'{dir_path}/gif/sim.gif', images, loop=0)
