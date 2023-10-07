@@ -206,6 +206,11 @@ for i in range(500):
     shoulderforce = -0.1*qd[3]
     elbowforce = -0.1*qd[4]
 
+    if i > 280 and i < 300:
+        elbowforce += 5*(pi/2 - q[4])
+    elif i > 320 and i < 350:
+        shoulderforce += 5*(-pi/3 - q[3])
+
     K = [2, 0.5, -50, -0.5]
     cartstate = np.array([q[0], qd[0], q[1], qd[1]])
     cartforce = K @ cartstate
@@ -227,7 +232,7 @@ tau_log = np.array(tau_log)
 # print(q_log)
 
 plot_log = False
-plot_log = True
+# plot_log = True
 if plot_log:
     fig, axs = plt.subplots(2, 1, sharex=True, figsize=(10,8))
     axs[0].plot(q_log[:,0], label='x')
@@ -269,7 +274,7 @@ for i in range(0, len(q_log), 10):
     ax.add_artist(plt.Circle((p_body[0], p_body[1]), 2*r, color='gray'))
     ax.add_artist(plt.Circle((p_hand[0], p_hand[1]), 0.05, color='black'))
 
-    ax.set_title(i)
+    ax.set_title(f"t={round(i*0.01,2)}s")
     ax.set_xlim([-1, 1])
     ax.set_ylim([-0.5, 1.5])
     ax.set_aspect('equal')
@@ -287,4 +292,4 @@ for file_name in sorted(os.listdir(png_dir)):
 for _ in range(10):
     images.append(imageio.imread(file_path))
 
-imageio.mimsave(f'{dir_path}/gif/iamge.gif', images, loop=0)
+imageio.mimsave(f'{dir_path}/gif/sim.gif', images, loop=0)
