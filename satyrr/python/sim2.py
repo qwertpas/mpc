@@ -26,43 +26,65 @@ tau_log = []
 for i in range(500):
 
     # Mass matrix of the manipulator equation: M*qdd + C + G = τ
-    M = np.matrix([
-        [
-            J[0] * N[0] ** 2 + m[0] + m[1] + m[2],
-            (cos(q[1] + q[3]) * L[0] + cos(q[1] + q[3] + q[4]) * L[1] - cos(q[1]) * q[2]) * m[2] - cos(q[1]) * m[1] * q[2],
-            (-m[1] - m[2]) * sin(q[1]),
-            (cos(q[1] + q[3]) * L[0] + cos(q[1] + q[3] + q[4]) * L[1]) * m[2],
-            cos(q[1] + q[3] + q[4]) * L[1] * m[2],
-        ],
-        [
-            (cos(q[1] + q[3]) * L[0] + cos(q[1] + q[3] + q[4]) * L[1] - cos(q[1]) * q[2]) * m[2] - cos(q[1]) * m[1] * q[2],
-            ((sin(q[1] + q[3]) * L[0] + sin(q[1] + q[3] + q[4]) * L[1] - sin(q[1]) * q[2]) ** 2 + (cos(q[1] + q[3]) * L[0] + cos(q[1] + q[3] + q[4]) * L[1] - cos(q[1]) * q[2]) ** 2) * m[2] + I[0] + I[1] + I[2] + m[1] * q[2] ** 2,
-            (sin(q[3] + q[4]) * L[1] + sin(q[3]) * L[0]) * m[2],
-            -cos(q[3] + q[4]) * L[1] * m[2] * q[2] - cos(q[3]) * L[0] * m[2] * q[2] + 2 * cos(q[4]) * L[0] * L[1] * m[2] + I[1] + I[2] + L[0] ** 2 * m[2] + L[1] ** 2 * m[2],
-            -cos(q[3] + q[4]) * L[1] * m[2] * q[2] + cos(q[4]) * L[0] * L[1] * m[2] + I[2] + L[1] ** 2 * m[2],
-        ],
-        [
-            (-m[1] - m[2]) * sin(q[1]),
-            (sin(q[3] + q[4]) * L[1] + sin(q[3]) * L[0]) * m[2],
-            m[1] + m[2],
-            (sin(q[3] + q[4]) * L[1] + sin(q[3]) * L[0]) * m[2],
-            sin(q[3] + q[4]) * L[1] * m[2],
-        ],
-        [
-            (cos(q[1] + q[3]) * L[0] + cos(q[1] + q[3] + q[4]) * L[1]) * m[2],
-            -cos(q[3] + q[4]) * L[1] * m[2] * q[2] - cos(q[3]) * L[0] * m[2] * q[2] + 2 * cos(q[4]) * L[0] * L[1] * m[2] + I[1] + I[2] + L[0] ** 2 * m[2] + L[1] ** 2 * m[2],
-            (sin(q[3] + q[4]) * L[1] + sin(q[3]) * L[0]) * m[2],
-            ((sin(q[1] + q[3]) * L[0] + sin(q[1] + q[3] + q[4]) * L[1]) ** 2 + (cos(q[1] + q[3]) * L[0] + cos(q[1] + q[3] + q[4]) * L[1]) ** 2) * m[2] + I[1] + I[2] + J[1] * N[1] ** 2,
-            cos(q[4]) * L[0] * L[1] * m[2] + I[2] + L[1] ** 2 * m[2],
-        ],
-        [ 
-            cos(q[1] + q[3] + q[4]) * L[1] * m[2],
-            -cos(q[3] + q[4]) * L[1] * m[2] * q[2] + cos(q[4]) * L[0] * L[1] * m[2] + I[2] + L[1] ** 2 * m[2], 
-            sin(q[3] + q[4]) * L[1] * m[2],
-            cos(q[4]) * L[0] * L[1] * m[2] + I[2] + L[1] ** 2 * m[2],
-            I[2] + J[2] * N[2] ** 2 + L[1] ** 2 * m[2],
-        ],
-    ])
+    M = np.zeros(25)
+    x0 = m[1] + m[2];
+    x1 = r - cos(q[1])*q[2];
+    x2 = q[1] + q[3];
+    x3 = cos(x2)*L[0];
+    x4 = x2 + q[4];
+    x5 = cos(x4)*L[1];
+    x6 = x3 + x5;
+    x7 = x1 + x6;
+    x8 = r*m[0] + x1*m[1] + x7*m[2];
+    x9 = sin(q[1]);
+    x10 = -x0*x9;
+    x11 = x6*m[2];
+    x12 = x5*m[2];
+    x13 = sin(x2)*L[0] + sin(x4)*L[1];
+    x14 = I[1] + I[2];
+    x15 = r*x9;
+    x16 = x15*m[1];
+    x17 = sin(q[3]);
+    x18 = q[3] + q[4];
+    x19 = sin(x18);
+    x20 = x19*L[1];
+    x21 = x17*L[0] + x20;
+    x22 = m[2]*q[2];
+    x23 = cos(q[4])*L[0]*L[1]*m[2];
+    x24 = I[2] + pow(L[1], 2)*m[2];
+    x25 = r*x12 - x22*cos(x18)*L[1];
+    x26 = r*x3*m[2] - x22*cos(q[3])*L[0] + 2*x23 + x24 + x25 + I[1] + pow(L[0], 2)*m[2];
+    x27 = x23 + x24;
+    x28 = x25 + x27;
+    x29 = x21*m[2];
+    x30 = x20*m[2];
+    M[0] = x0 + J[0]*pow(N[0], 2) + m[0];
+    M[1] = x8;
+    M[2] = x10;
+    M[3] = x11;
+    M[4] = x12;
+    M[5] = x8;
+    M[6] = pow(r, 2)*m[0] + x14 + (pow(x1, 2) + pow(x9, 2)*pow(q[2], 2))*m[1] + (pow(x7, 2) + pow(x13 - x9*q[2], 2))*m[2] + I[0];
+    M[7] = -x16 + (-x15 + x21)*m[2];
+    M[8] = x26;
+    M[9] = x28;
+    M[10] = x10;
+    M[11] = -x15*m[2] - x16 + x17*L[0]*m[2] + x19*L[1]*m[2];
+    M[12] = x0;
+    M[13] = x29;
+    M[14] = x30;
+    M[15] = x11;
+    M[16] = x26;
+    M[17] = x29;
+    M[18] = x14 + (pow(x13, 2) + pow(x6, 2))*m[2] + J[1]*pow(N[1], 2);
+    M[19] = x27;
+    M[20] = x12;
+    M[21] = x28;
+    M[22] = x30;
+    M[23] = x27;
+    M[24] = x24 + J[2]*pow(N[2], 2);
+    M = M.reshape((5,5))
+
     M_inv = np.linalg.inv(M)
 
     # Sum of Coriolis and Gravity matrices
@@ -158,42 +180,20 @@ for i in range(500):
     ])
 
 
-    legforce = 500*(0.5 - q[2]) - 100*(qd[2]) + 150 #pd controller on leg length = 0.5m
-    shoulderforce = -5*qd[3]                  #damping
-    elbowforce = -5*qd[4]                     #damping
-    linangle = 0
+    legforce = 500*(0.5 - q[2]) - 100*(qd[2]) + 150*sin(q[1]) #pd controller on leg length = 0.5m
+    shoulderforce = -1*qd[3]                  #damping
+    elbowforce = -1*qd[4]                     #damping
 
-    if i < 150:
-        elbowforce += 10*(pi/3 - q[4])
-        shoulderforce += 10*(pi/3 - q[3])
-        linangle = -0.11
-    elif i > 150 and i < 210:                     #do a squat
+    if i > 150 and i < 230:                     #do a squat
         legforce = 500*(0.2 - q[2]) - 100*(qd[2]) + 150 #pd controller on leg length = 0.5m 
-        elbowforce += 20*(pi/6 - q[4])
-        shoulderforce += 20*(pi/3 - q[3])
-        linangle = -0.2
-    elif i > 210 and i < 220:
-        elbowforce += 20*(pi/6 - q[4])
-        shoulderforce += 20*(pi/3 - q[3])
-        linangle = -0.5
-    elif i > 230 and i < 240:
-        shoulderforce += 20*(3*pi/4 - q[3])
+    if i > 280 and i < 300:                     #excitation to move forearm to forward to pi/2
         elbowforce += 20*(pi/2 - q[4])
-        linangle = -0.5
-    elif i > 240 and i < 300:
-        shoulderforce += 20*(pi/2 - q[3])
-        elbowforce += 20*(pi/2 - q[4])
-        linangle = -0.2
-    elif i > 300:
-        shoulderforce += 20*(pi/2 - q[3])
-        elbowforce += 20*(pi/2 - q[4])
-        linangle = -0.1
+    elif i > 320 and i < 350:                   #excitation to move upper arm back to -pi/3
+        shoulderforce += 20*(-pi/3 - q[3])
 
-
-
-    K = [10, 10, -300, -5]
+    K = [10, 5, -500, -5]
     # K = [0, 0, 0, 0]
-    cartstate = np.array([q[0], qd[0], q[1]+linangle, qd[1]]) #LQR(ish) on the cartpole (not optimized)
+    cartstate = np.array([q[0], qd[0], q[1], qd[1]]) #LQR(ish) on the cartpole (not optimized)
     cartforce = K @ cartstate
 
     tau = np.array([cartforce, 0, legforce, shoulderforce, elbowforce]).reshape((5,1))
@@ -215,7 +215,7 @@ tau_log = np.array(tau_log)
 
 # Plot the states and torques over time
 plot_log = False
-plot_log = True
+# plot_log = True
 if plot_log:
     fig, axs = plt.subplots(2, 1, sharex=True, figsize=(10,8))
     axs[0].plot(q_log[:,0], label='x')
