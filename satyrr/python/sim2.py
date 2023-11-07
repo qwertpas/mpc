@@ -6,7 +6,8 @@ import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
 print(dir_path)
 
-q = np.array([0, 0.05, 0.5, pi/6, 4*pi/6])  # wheel x, pendulum angle, leg length, shoulder angle, elbow angle
+# q = np.array([0, 0.05, 0.5, pi/6, 4*pi/6])  # wheel x, pendulum angle, leg length, shoulder angle, elbow angle
+q = np.array([0, 0, 0.5, -pi/6, 2*pi/6])  # wheel x, pendulum angle, leg length, shoulder angle, elbow angle
 qd = np.array([0., 0., 0., 0., 0.])
 dt = 0.01
 
@@ -180,20 +181,43 @@ for i in range(500):
     ])
 
 
-    legforce = 500*(0.5 - q[2]) - 100*(qd[2]) + 150*sin(q[1]) #pd controller on leg length = 0.5m
+    legforce = 500*(0.5 - q[2]) - 100*(qd[2]) + 150*cos(q[1]) #pd controller on leg length = 0.5m
     shoulderforce = -1*qd[3]                  #damping
     elbowforce = -1*qd[4]                     #damping
 
-    if i > 150 and i < 230:                     #do a squat
-        legforce = 500*(0.2 - q[2]) - 100*(qd[2]) + 150 #pd controller on leg length = 0.5m 
-    if i > 280 and i < 300:                     #excitation to move forearm to forward to pi/2
+    if i < 150:
+        elbowforce += 10*(pi/3 - q[4])
+        shoulderforce += 10*(pi/3 - q[3])
+        linangle = -0.11
+    elif i > 150 and i < 210:                     #do a squat
+        legforce = 500*(0.2 - q[2]) - 100*(qd[2]) + 150*cos(q[1]) #pd controller on leg length = 0.5m 
+        elbowforce += 20*(pi/6 - q[4])
+        shoulderforce += 20*(pi/3 - q[3])
+        linangle = -0.15
+    elif i > 210 and i < 220:
+        elbowforce += 20*(pi/6 - q[4])
+        shoulderforce += 20*(pi/3 - q[3])
+        linangle = -0.4
+    elif i > 230 and i < 240:
+        shoulderforce += 20*(3*pi/4 - q[3])
         elbowforce += 20*(pi/2 - q[4])
-    elif i > 320 and i < 350:                   #excitation to move upper arm back to -pi/3
-        shoulderforce += 20*(-pi/3 - q[3])
+        linangle = -0.4
+    elif i > 240 and i < 300:
+        shoulderforce += 20*(pi/2 - q[3])
+        elbowforce += 20*(pi/2 - q[4])
+        linangle = -0.2
+    elif i > 300:
+        shoulderforce += 20*(pi/2 - q[3])
+        elbowforce += 20*(pi/2 - q[4])
+        linangle = -0.1
 
-    K = [10, 5, -500, -5]
+    # K = [300, 1, -1000, -1]
+    K = [10, 10, -1000, -5]
+
     # K = [0, 0, 0, 0]
-    cartstate = np.array([q[0], qd[0], q[1], qd[1]]) #LQR(ish) on the cartpole (not optimized)
+    cartstate = np.array([q[0], qd[0], q[1]+linangle, qd[1]]) #LQR(ish) on the cartpole (not optimized)
+
+    # cartstate = np.array([q[0], qd[0], q[1], qd[1]]) #LQR(ish) on the cartpole (not optimized)
     cartforce = K @ cartstate
 
     tau = np.array([cartforce, 0, legforce, shoulderforce, elbowforce]).reshape((5,1))
@@ -233,7 +257,7 @@ if plot_log:
         ax.legend()
     plt.show()
 
-create_gif = False
+# create_gif = False
 create_gif = True
 # Create GIF using logged states and forward kinematics
 if create_gif:
